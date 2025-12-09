@@ -1,0 +1,237 @@
+/* client/css/style.css - VERSION FINALE */
+
+/* --- RESET & BASES --- */
+* { box-sizing: border-box; }
+
+body { 
+    background: #323232; 
+    color: #eee; 
+    font-family: 'Segoe UI', sans-serif; 
+    font-size: 13px; 
+    margin: 0; 
+    overflow-y: hidden; 
+}
+
+.container { display: flex; flex-direction: column; height: 100vh; }
+
+/* HEADER */
+.header { padding: 10px; background: #262626; border-bottom: 1px solid #1a1a1a; display:flex; justify-content:space-between; }
+.header h2 { margin:0; color:#fff; font-size:14px; }
+.reload-btn { background:none; border:none; color:#666; cursor:pointer; font-size:16px; }
+
+/* SECTION FICHIER */
+.section-file { padding: 10px; background: #323232; }
+input[type="file"] { width: 100%; color: #fff; }
+
+/* --- GRILLE 2 COLONNES EGALES --- */
+.file-cols {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+.file-col-half {
+    flex: 1; /* Chaque colonne prend 50% */
+}
+.col-separator {
+    border-left: 1px solid #444;
+    padding-left: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 4px;
+}
+
+/* CLASSE INACTIF */
+.input-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(100%);
+}
+
+/* ONGLETS */
+.tabs { display: flex; background: #262626; }
+.tab-btn { flex: 1; padding: 10px; background: #2b2b2b; color: #999; border:none; border-bottom:3px solid transparent; font-weight:bold; cursor:pointer; }
+.tab-btn.active { color:#fff; border-bottom:3px solid #1473E6; background:#383838; }
+.tab-content { display:none; padding:15px; overflow-y:auto; flex:1; padding-bottom:70px; }
+.tab-content.active { display:block; }
+
+/* SOUS-ONGLETS */
+.sub-tabs { display: flex; margin-bottom: 15px; background: #222; border-radius: 3px; padding: 2px; border: 1px solid #444; }
+.sub-tab-btn { flex: 1; background: transparent; border: none; color: #888; padding: 6px; cursor: pointer; font-size: 11px; font-weight: bold; border-radius: 2px; text-transform: none; }
+.sub-tab-btn.active { background: #444; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.sub-tab-content { display: none; }
+.sub-tab-content.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+
+/* INPUTS */
+.control-row { display:flex; justify-content:space-between; margin-bottom:8px; align-items:center; }
+input[type="text"], input[type="number"], select { background:#222; border:1px solid #444; color:#fff; padding:4px; border-radius:2px; text-align:right; width:70px; }
+.group-title { color:#d0d0d0; font-weight:bold; margin:15px 0 5px 0; border-bottom:1px solid #444; font-size: 11px; text-transform: capitalize; }
+
+/* Avertissement */
+.warning-msg { color: #ff5f5f; font-size: 11px; margin-top: 5px; background: rgba(255, 0, 0, 0.1); border: 1px solid #ff5f5f; padding: 4px; border-radius: 2px; text-align: center; }
+
+/* Nombres + %/mm/pt */
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+.number-wrapper { display: flex; align-items: center; margin-left: 5px; }
+.number-wrapper input[type="number"] { width: 40px; text-align: right; padding-right: 2px; margin: 0; }
+.unit-symbol { margin-left: 4px; color: #888; font-size: 10px; user-select: none; width: 15px; }
+
+/* SLIDERS */
+input[type="range"] { -webkit-appearance: none; width: 80px !important; height: 4px; background: #1a1a1a; border-radius: 2px; border: 1px solid #000; cursor: pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 14px; background: #b0b0b0; border: 1px solid #000; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.5); margin-top: -6px; }
+
+/* BLOCS CMJN */
+.cmyk-title { font-weight: bold; font-size: 11px; color: #ddd; margin-bottom: 4px; margin-left: 1px; text-transform: capitalize; letter-spacing: 0.3px; }
+.cmyk-wrapper { background: #292929; border: 1px solid #444; padding: 8px; margin-bottom: 12px; width: max-content; border-radius: 2px; }
+.cmyk-body { display: flex; align-items: center; gap: 15px; }
+.cmyk-row { display:flex; align-items:center; }
+.cmyk-label { width:15px; font-size:10px; color:#aaa; }
+.swatch-visual { width: 25px; height: 25px; border: 1px solid #555; background-color: #000; cursor: pointer; }
+.swatch-visual:hover { border-color: #999; }
+
+/* --- STYLE LISTE DES COLONNES (Drag & Edit) --- */
+
+.col-list {
+    margin-top: 5px;
+    border: 1px solid #444;
+    background: #222;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.col-item {
+    display: flex;
+    align-items: center;
+    padding: 3px 5px;
+    border-bottom: 1px solid #333;
+    background: #2a2a2a;
+    transition: background 0.1s;
+    user-select: none; /* Empêche la sélection de texte native */
+}
+
+/* Couleur de survol */
+.col-item:hover {
+    background-color: #333;
+}
+
+/* État sélectionné (Bleu) */
+.col-item.ui-selected {
+    background-color: #264a75 !important; 
+    border-color: #2680eb;
+}
+
+/* État pendant le déplacement (Drag) */
+.col-item.dragging {
+    opacity: 0.5;
+    background: #000;
+    border: 1px dashed #666;
+}
+
+/* --- POIGNÉE DE DÉPLACEMENT (Hamburger) --- */
+.drag-handle {
+    width: 25px;
+    height: 25px;
+    min-width: 25px; /* Empêche l'écrasement */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    font-size: 20px; /* Taille augmentée */
+    color: #888;
+    margin-right: 5px;
+}
+
+.drag-handle:hover { color: #fff; }
+.drag-handle:active { cursor: grabbing; }
+
+.col-item input[type="checkbox"] { 
+    margin-right: 8px; 
+    flex-shrink: 0; 
+}
+
+/* --- NOM DE LA COLONNE --- */
+.col-name {
+    margin-right: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: text;
+    
+    /* MODIFICATION DEMANDÉE */
+    max-width: 100%; 
+    flex-grow: 1;
+    min-width: 0; /* Permet à l'ellipsis de fonctionner dans un flex child */
+}
+
+/* --- ICONE CRAYON (ÉDITION) --- */
+.edit-icon {
+    cursor: pointer;
+    opacity: 0.5;      /* Plus visible par défaut */
+    margin-right: 8px;
+    font-size: 20px;   /* Agrandie */
+    transition: opacity 0.2s;
+    padding: 2px;
+    color: #aaa;
+}
+
+.edit-icon:hover {
+    opacity: 1;
+    color: #fff;
+}
+
+.col-item:hover .edit-icon { opacity: 0.8; } /* Encore plus visible au survol de la ligne */
+
+/* --- CHAMP DE SAISIE (RENOMMAGE) --- */
+/* On utilise "input.col-name-input" pour avoir plus de poids que la règle globale */
+input.col-name-input {
+    background: #eee;
+    color: #000;
+    border: 1px solid #2680eb;
+    padding: 2px 4px;
+    font-size: 11px;
+    font-family: sans-serif;
+    
+    /* Largeur fixe */
+    width: 130px !important; 
+    
+    /* FORCE LE TEXTE A GAUCHE (Override le text-align:right global) */
+    text-align: left !important;
+    
+    margin-right: 10px;
+    box-sizing: border-box;
+    border-radius: 2px;
+}
+
+/* --- GROUPE BOUTONS ALIGNEMENT --- */
+.align-grp {
+    display: flex;
+    gap: 1px;
+    margin-left: 5px;
+    flex-shrink: 0;
+}
+
+.align-btn {
+    width: 25px; /* Légèrement plus large pour le confort */
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #444;
+    color: #aaa;
+    font-size: 10px;
+    cursor: pointer;
+    border: 1px solid #222;
+}
+
+.align-btn:hover { background: #555; color: #fff; }
+.align-btn.selected { background: #2680eb; color: #fff; border-color: #2680eb; }
+
+/* BOUTONS */
+.footer { position:fixed; bottom:0; width:100%; padding:10px; background:#222; border-top:1px solid #444; }
+button.action-btn { padding:10px; width:100%; border-radius:2px; border:none; color:#fff; font-weight:bold; cursor:pointer; text-transform: uppercase; }
+button.primary { background:#1473E6; }
+button.primary:hover { background:#1060c0; }
+button.action-btn:disabled { background-color: #444 !important; color: #888 !important; border: 1px solid #555; cursor: not-allowed; opacity: 0.7; }
