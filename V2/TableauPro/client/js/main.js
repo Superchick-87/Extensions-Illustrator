@@ -1,4 +1,4 @@
-/* client/js/main.js - VERSION V23 : SUPPRESSION STYLES INLINE (PRIORITÉ AU CSS) */
+/* client/js/main.js - VERSION V44 : FIX INPUT MARGE (ACCEPTE 0, REFUSE NEGATIFS) */
 
 // --- 1. VARIABLES GLOBALES ---
 var fullRawData = []; 
@@ -28,9 +28,7 @@ function userAction() {
 
 // --- 2. STYLE DYNAMIQUE ---
 function injectStyles() {
-    // NETTOYAGE : On ne met plus rien ici.
-    // Tous les styles (.col-item, .edit-icon, etc.) sont désormais gérés
-    // proprement dans le fichier css/style.css pour éviter les conflits.
+    // NETTOYAGE : Tout est dans css/style.css
 }
 
 // --- 3. UTILITAIRES ---
@@ -47,6 +45,7 @@ function setupShiftIncrement(input) {
             var step = 10;
             if (e.key === "ArrowDown") step = -10;
             var newVal = currentVal + step;
+            // Respecter le min si défini (pour empêcher les négatifs)
             if(this.min !== "" && newVal < parseFloat(this.min)) newVal = parseFloat(this.min);
             if(this.max !== "" && newVal > parseFloat(this.max)) newVal = parseFloat(this.max);
             this.value = newVal;
@@ -158,7 +157,6 @@ function updateMasterCheck() {
     bAll.checked = allChecked;
 }
 
-// --- 5. GÉNÉRATION UI COLONNES (AVEC RENOMMAGE) ---
 // --- 5. GÉNÉRATION UI COLONNES (MULTI-DRAG & DROP) ---
 function generateColUI(preserveState) {
     var lst = document.getElementById('colList'); if(!lst) return; 
@@ -172,7 +170,6 @@ function generateColUI(preserveState) {
 
     lst.innerHTML = "";
     
-    // Fonction helper pour vérifier si un index est sélectionné
     function isUiSelected(idx) { return selectedUiIndices.includes(idx); }
 
     headers.forEach(function(h, idx){
@@ -191,7 +188,6 @@ function generateColUI(preserveState) {
         var clC = (alignState === 'center') ? 'selected' : '';
         var clR = (alignState === 'right') ? 'selected' : '';
 
-        // HTML
         el.innerHTML = `
             <div class="drag-handle">☰</div>
             <input type="checkbox" ${checkAttr}>
@@ -203,7 +199,6 @@ function generateColUI(preserveState) {
                 <div class="align-btn ${clR}" data-al="right">R</div>
             </div>`;
         
-        // --- RENOMMAGE ---
         function startRename() {
             var nameSpan = el.querySelector('.col-name');
             var currentName = headers[idx]; 
@@ -229,7 +224,6 @@ function generateColUI(preserveState) {
         nameEl.ondblclick = function(e) { e.stopPropagation(); startRename(); };
         editIcon.onclick = function(e) { e.stopPropagation(); startRename(); };
 
-        // --- CLIC SELECTION ---
         el.onclick = function(e) {
             if (isDragging) return; 
             if (e.target.tagName === 'INPUT' || e.target.classList.contains('align-btn') || e.target.classList.contains('edit-icon') || e.target.classList.contains('drag-handle') || e.target.classList.contains('col-name-input')) return;
@@ -252,7 +246,6 @@ function generateColUI(preserveState) {
             generateColUI(true); 
         };
 
-        // EVENT LISTENERS INTERNES
         var cb = el.querySelector('input[type="checkbox"]');
         cb.onclick = function(e) {
             e.stopPropagation();
@@ -287,35 +280,19 @@ function generateColUI(preserveState) {
             }
         });
         
-        // --- DRAG START (MULTI) ---
         el.addEventListener('dragstart', function(e){ 
             isDragging = true;
-            
             var currentIdx = parseInt(el.getAttribute('data-idx'));
-            
-            // Si on drag un élément qui n'est PAS sélectionné, on le sélectionne seul
             if (!selectedUiIndices.includes(currentIdx)) {
                 selectedUiIndices = [currentIdx];
-                // Mise à jour visuelle rapide
                 lst.querySelectorAll('.col-item').forEach(it => it.classList.remove('ui-selected'));
                 el.classList.add('ui-selected');
             }
-
-            // On ajoute la classe .dragging à TOUS les éléments sélectionnés
-            lst.querySelectorAll('.col-item.ui-selected').forEach(function(item) {
-                item.classList.add('dragging');
-            });
-
-            if(e.dataTransfer) { 
-                e.dataTransfer.effectAllowed = 'move'; 
-                e.dataTransfer.setData('text/html', null); 
-                // Image fantôme (optionnel, prend le premier élément)
-                e.dataTransfer.setDragImage(el, 0, 0);
-            }
+            lst.querySelectorAll('.col-item.ui-selected').forEach(function(item) { item.classList.add('dragging'); });
+            if(e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', null); e.dataTransfer.setDragImage(el, 0, 0); }
             userAction(); 
         });
         
-        // --- DRAG END ---
         el.addEventListener('dragend', function(){ 
             lst.querySelectorAll('.dragging').forEach(it => it.classList.remove('dragging'));
             reorderColumnsData(); 
@@ -325,19 +302,12 @@ function generateColUI(preserveState) {
         lst.appendChild(el);
     });
     
-    // --- DRAG OVER (MULTI) ---
     lst.ondragover = function(e){
         e.preventDefault(); 
-        
-        // On récupère TOUS les éléments en cours de déplacement
         var draggingItems = document.querySelectorAll('.dragging');
         if(draggingItems.length === 0) return;
-
-        // On cherche l'élément cible sous la souris (qui n'est pas en train d'être déplacé)
         var siblings = [...lst.querySelectorAll('.col-item:not(.dragging)')];
         var nextSibling = siblings.find(s => e.clientY <= s.getBoundingClientRect().top + s.offsetHeight/2);
-        
-        // On déplace le GROUPE entier
         draggingItems.forEach(function(dragItem) {
             if(nextSibling) lst.insertBefore(dragItem, nextSibling);
             else lst.appendChild(dragItem);
@@ -726,6 +696,9 @@ function updateUIFromData(hexData) {
         syncRadiusLogic('');
         checkLegendState();
 
+        var btnApply = document.getElementById('btnApply');
+        if(btnApply) btnApply.disabled = false;
+
         isScriptUpdating = false; 
     } catch(e) { isScriptUpdating = false; }
 }
@@ -789,6 +762,16 @@ function init() {
             userAction();
         });
     }
+    
+    // --- MODIF V44 : SECURITE INPUT MARGE (PAS DE NEGATIF VISUEL) ---
+    var padInput = document.getElementById('pad');
+    if (padInput) {
+        padInput.addEventListener('change', function() {
+            if(parseFloat(this.value) < 0) this.value = 0;
+        });
+        // Min attribute déjà set dans HTML, mais double sécurité JS
+        padInput.min = "0";
+    }
 
     initTabs();
     
@@ -796,6 +779,9 @@ function init() {
     
     var allNumberInputs = document.querySelectorAll('input[type="number"]');
     allNumberInputs.forEach(setupShiftIncrement);
+
+    var btnApply = document.getElementById('btnApply');
+    if(btnApply) btnApply.disabled = true;
 
     var btnImport = document.getElementById('btnImport');
     var fInput = document.getElementById('fileInput');
@@ -812,6 +798,9 @@ function init() {
                 fullRawData = r.data; 
                 uncheckedColIndices = []; 
                 processDataRange();
+                
+                if(btnApply) btnApply.disabled = false;
+
                 var tabCols = document.querySelector('[data-tab="tab-cols"]');
                 if(tabCols) tabCols.click();
             }});
@@ -829,6 +818,9 @@ function init() {
     function onRangeChange() { userAction(); processDataRange(); }
 
     if(cbNbLines) {
+        cbNbLines.checked = true;
+        setTimeout(function(){ cbNbLines.dispatchEvent(new Event('change')); }, 0);
+
         cbNbLines.onchange = function() {
             if(this.checked) {
                 if(wrapRowEnd) wrapRowEnd.classList.add('input-disabled');   
@@ -850,7 +842,6 @@ function init() {
     if(valNbLines) valNbLines.oninput = onRangeChange;
     if(cbShowTitle) cbShowTitle.onchange = function() { userAction(); };
 
-    var btnApply = document.getElementById('btnApply');
     if(btnApply) {
         btnApply.onclick = function() {
             userAction(); 
@@ -864,6 +855,10 @@ function init() {
                 }
             });
             if(act.length===0){ alert("Cochez une colonne."); return; }
+
+            // --- MODIF V44 : RECUPERATION SAFE DU PAD (0 est accepté, negatif devient 0, vide devient 4) ---
+            var rawPad = parseFloat(document.getElementById('pad').value);
+            var safePad = (isNaN(rawPad)) ? 4 : Math.max(0, rawPad);
 
             var csvOpts = {
                 start: parseInt(document.getElementById('rowStart').value) || 0,
@@ -886,7 +881,9 @@ function init() {
                     isBold: document.getElementById('isBold') ? document.getElementById('isBold').checked : false,
                     hHead: parseFloat(document.getElementById('hHead').value)||15,
                     hRow: parseFloat(document.getElementById('hRow').value)||10,
-                    pad: parseFloat(document.getElementById('pad').value)||4,
+                    
+                    pad: safePad, // UTILISATION DE LA VALEUR SECURISÉE
+
                     wrapHead: document.getElementById('wrapHead') ? document.getElementById('wrapHead').checked : false,
                     maxRows: 0, totalW: 0,
                     radius: {

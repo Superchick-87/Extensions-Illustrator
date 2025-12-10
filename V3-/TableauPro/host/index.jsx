@@ -1,4 +1,4 @@
-/* host/index.jsx - VERSION V54 : FIX LÉGENDE (RECTANGLE FOND) + BLOC FLOTTANT */
+/* host/index.jsx - VERSION V67 : SUPPORT ROW/CELL SEPARÉ */
 
 $.global.creerTableau = function(hexData) {
     illustratorEngine(hexData);
@@ -105,6 +105,10 @@ var illustratorEngine = function(hexData) {
         var data = params.data;
         var cols = params.activeCols; 
         var aligns = params.colAligns;
+        
+        // V67 : CustomStyles a maintenant .rows et .cells
+        var customStyles = params.customStyles || { rows:{}, cells:{} }; 
+
         if (!cols || cols.length === 0) return;
 
         var rowLimit = data.length;
@@ -246,8 +250,16 @@ var illustratorEngine = function(hexData) {
             if (isH && geo.hHead === 0) { continue; }
 
             var lH = isH ? geo.hHead : geo.hRow;
-            var cBg = isH ? cHeadB : (r%2!==0 ? cRow1 : cRow2);
-            var cTxt = isH ? cHeadT : cContT;
+            // 1. Couleur de base de la ligne (alternance ou header)
+            var baseRowBg = isH ? cHeadB : (r%2!==0 ? cRow1 : cRow2);
+            var baseRowTxt = isH ? cHeadT : cContT;
+
+            // 2. Surcharge LIGNE (Si une règle "row" existe pour cet index r)
+            if (customStyles.rows && customStyles.rows[r]) {
+                if(customStyles.rows[r].bg) baseRowBg = makeCMYK(customStyles.rows[r].bg);
+                if(customStyles.rows[r].txt) baseRowTxt = makeCMYK(customStyles.rows[r].txt);
+            }
+            
             var curX = startX;
 
             for (var k=0; k<cols.length; k++) {
@@ -255,6 +267,18 @@ var illustratorEngine = function(hexData) {
                 var refDataW = colDataWidths[k]; 
                 var txt = (data[r] && data[r][colIdx]) ? cleanText(data[r][colIdx]) : "";
                 var align = aligns[k] || "left"; 
+
+                // 3. Initialisation Cellule avec la couleur de Ligne calculée
+                var cBg = baseRowBg;
+                var cTxt = baseRowTxt;
+
+                // 4. Surcharge CELLULE (Si une règle "cell" existe pour r_k)
+                // Note : k est l'index visuel de la colonne (0, 1, 2...)
+                var cellKey = r + "_" + k; 
+                if (customStyles.cells && customStyles.cells[cellKey]) {
+                    if (customStyles.cells[cellKey].bg) cBg = makeCMYK(customStyles.cells[cellKey].bg);
+                    if (customStyles.cells[cellKey].txt) cTxt = makeCMYK(customStyles.cells[cellKey].txt);
+                }
 
                 var rect = grpTable.pathItems.rectangle(curY, curX, w, lH);
                 rect.stroked = false; rect.filled = true; rect.fillColor = cBg;
@@ -340,7 +364,7 @@ var illustratorEngine = function(hexData) {
             grpTable.clipped = true;
         }
 
-        // --- LÉGENDE (CORRIGÉE V54) ---
+        // --- LÉGENDE ---
         if (params.csvOptions && params.csvOptions.legend && params.csvOptions.legend !== "") {
             var rawLegend = cleanText(params.csvOptions.legend); 
             var mm = 2.834645;
